@@ -24,7 +24,11 @@ export class Client {
     'Switchfin': 'https://raw.githubusercontent.com/dragonflylee/switchfin/refs/heads/dev/resources/icon/icon.jpg',
     'nx-hbmenu': 'https://raw.githubusercontent.com/switchbrew/nx-hbmenu/refs/heads/master/icon.jpg',
     'Homebrew Menu': 'https://raw.githubusercontent.com/switchbrew/nx-hbmenu/refs/heads/master/icon.jpg',
-    'RetroArch': 'https://gbatemp.net/attachments/retroarch-jpg.266593/'
+    'RetroArch': 'https://gbatemp.net/attachments/retroarch-jpg.266593/',
+    'Tinfoil': 'https://i.imgur.com/Brp1KRx.jpeg',
+    'HB App Store': 'https://raw.githubusercontent.com/fortheusers/hb-appstore/refs/heads/main/logo.png',
+    'Homebrew App Store': 'https://raw.githubusercontent.com/fortheusers/hb-appstore/refs/heads/main/logo.png',
+    'hb-appstore': 'https://raw.githubusercontent.com/fortheusers/hb-appstore/refs/heads/main/logo.png'
   }
 
   constructor(private host: string, private port: number) {}
