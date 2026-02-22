@@ -164,11 +164,10 @@ export class Client {
     switch (err.code) {
       case 'ETIMEDOUT':
       case 'ECONNREFUSED':
-        this.logger.log(chalk.yellow('Could not connect to Nintendo Switch console. Retrying in 5 seconds...'))
-        setTimeout(() => this.startSocket(), 5000)
-        break
       case 'ECONNRESET':
-        this.logger.log(chalk.yellow('Connection to Switch lost. Retrying in 5 seconds...'))
+      case 'EPIPE':
+      case 'EHOSTDOWN':
+        this.logger.log(chalk.yellow('Connection lost. Retrying in 5 seconds...'))
         setTimeout(() => this.startSocket(), 5000)
         break
       default:
@@ -188,6 +187,13 @@ export class Client {
 
     this.logger.log('Connecting to Switch...')
     this.socketClient = new net.Socket()
+
+    this.socketClient.setTimeout(10000)
+    this.socketClient.on('timeout', () => {
+      this.logger.log('Socket timed out, reconnecting...')
+      this.socketClient.destroy()
+      setTimeout(() => this.startSocket(), 5000)
+    })
 
     this.socketClient.on('connect', () => {
       this.logger.log('Successfully connected to Nintendo Switch console.')
