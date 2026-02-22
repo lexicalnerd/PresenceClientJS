@@ -2,8 +2,8 @@
 # PresenceClientJS
 Custom client for [SwitchPresence-Rewritten](https://github.com/HeadpatServices/SwitchPresence-Rewritten) which adds support for dynamically changing `LargeImageKey` for the Rich Presence.
 
-![Playing](https://raw.githubusercontent.com/lexicalnerd/PresenceClientJS/refs/heads/main/playing.png)
-![Watching](https://raw.githubusercontent.com/lexicalnerd/PresenceClientJS/refs/heads/main/watching.png)
+<img src="https://raw.githubusercontent.com/lexicalnerd/PresenceClientJS/refs/heads/main/playing.png" width="500">
+<img src="https://raw.githubusercontent.com/lexicalnerd/PresenceClientJS/refs/heads/main/watching.png" width="500">
 
 ## Install
 
