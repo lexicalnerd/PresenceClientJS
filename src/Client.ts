@@ -76,6 +76,17 @@ export class Client {
     })
   }
 
+  private async reconnectDiscord() {
+  try {
+    this.rpcClient = new RPC.Client({ transport: 'ipc' })
+    await this.connectToDiscord()
+    this.logger.log('Successfully reconnected to Discord.')
+  } catch (err) {
+    this.logger.log(chalk.yellow('Failed to reconnect to Discord. Retrying in 10 seconds...'))
+    setTimeout(() => this.reconnectDiscord(), 10000)
+  }
+}
+
   public async setActivity(gameName: string, programId: bigint, timestamp?: number) {
   if (programId === 0x0100000000001000n) {
     await this.rpcClient.clearActivity()
@@ -84,7 +95,8 @@ export class Client {
 
   const transport = (this.rpcClient as any).transport
   if (!transport || !transport.socket || transport.socket.readyState !== 'open') {
-    this.logger.log('Discord RPC transport not ready, skipping activity update.')
+    this.logger.log(chalk.yellow('Discord RPC transport lost, reconnecting...'))
+    await this.reconnectDiscord()
     return
   }
 
@@ -93,6 +105,7 @@ export class Client {
   this.logger.log(`Image URL: https://tinfoil.media/ti/${fixedHexId}/256/256/`)
   const imageKey = this.getCustomImage(gameName) ?? await this.getImageKey(fixedHexId)
   const nonce = Date.now().toString()
+  
 
   transport.send({
     cmd: 'SET_ACTIVITY',
