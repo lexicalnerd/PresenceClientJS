@@ -77,37 +77,41 @@ export class Client {
   }
 
   public async setActivity(gameName: string, programId: bigint, timestamp?: number) {
-    if (programId === 0x0100000000001000n) {
-      await this.rpcClient.clearActivity()
-      return
-    }
-
-    const hexId = programId.toString(16).toUpperCase().padStart(16, '0')
-    const fixedHexId = this.fixProgramId(hexId)
-    this.logger.log(`Image URL: https://tinfoil.media/ti/${fixedHexId}/256/256/`)
-    const imageKey = this.getCustomImage(gameName) ?? await this.getImageKey(fixedHexId)
-
-    const transport = (this.rpcClient as any).transport
-    const nonce = Date.now().toString()
-
-    transport.send({
-      cmd: 'SET_ACTIVITY',
-      args: {
-        pid: process.pid,
-        activity: {
-          type: this.getActivityType(gameName),
-          name: gameName,
-          state: 'on Nintendo Switch',
-          timestamps: timestamp ? { start: timestamp } : undefined,
-          assets: {
-            large_image: imageKey,
-            large_text: gameName
-          }
-        }
-      },
-      nonce
-    })
+  if (programId === 0x0100000000001000n) {
+    await this.rpcClient.clearActivity()
+    return
   }
+
+  const transport = (this.rpcClient as any).transport
+  if (!transport || !transport.socket || transport.socket.readyState !== 'open') {
+    this.logger.log('Discord RPC transport not ready, skipping activity update.')
+    return
+  }
+
+  const hexId = programId.toString(16).toUpperCase().padStart(16, '0')
+  const fixedHexId = this.fixProgramId(hexId)
+  this.logger.log(`Image URL: https://tinfoil.media/ti/${fixedHexId}/256/256/`)
+  const imageKey = this.getCustomImage(gameName) ?? await this.getImageKey(fixedHexId)
+  const nonce = Date.now().toString()
+
+  transport.send({
+    cmd: 'SET_ACTIVITY',
+    args: {
+      pid: process.pid,
+      activity: {
+        type: this.getActivityType(gameName),
+        name: gameName,
+        state: 'on Nintendo Switch',
+        timestamps: timestamp ? { start: timestamp } : undefined,
+        assets: {
+          large_image: imageKey,
+          large_text: gameName
+        }
+      }
+    },
+    nonce
+  })
+}
 
   private startActivityInterval() {
     if (this.activityInterval) clearInterval(this.activityInterval)
@@ -160,27 +164,21 @@ export class Client {
   }
 
   private handleSocketError(err: any) {
-    if (this.pingTimeout) {
-      clearTimeout(this.pingTimeout)
-      this.pingTimeout = null
-    }
+  if (this.pingTimeout) {
+    clearTimeout(this.pingTimeout)
+    this.pingTimeout = null
+  }
 
-    switch (err.code) {
-      case 'ETIMEDOUT':
-      case 'ECONNREFUSED':
-      case 'ECONNRESET':
-      case 'EPIPE':
-      case 'EHOSTDOWN':
-        this.logger.log(chalk.yellow('Connection lost. Retrying in 5 seconds...'))
-        setTimeout(() => this.startSocket(), 5000)
-        break
-      default:
-        this.logger.log('An unknown error has occured. Please make a new issue at https://github.com/DelxHQ/ClientSwitchPresence/issues with a screenshot of the terminal.')
-        console.error(err)
-        this.rpcClient.destroy()
-        this.socketClient.destroy()
-        process.exit()
+    const retriableErrors = ['ETIMEDOUT', 'ECONNREFUSED', 'ECONNRESET', 'EPIPE', 'EHOSTDOWN', 'EHOSTUNREACH', 'ENETUNREACH']
+  
+    if (retriableErrors.includes(err.code)) {
+      this.logger.log(chalk.yellow(`Connection lost (${err.code}). Retrying in 5 seconds...`))
+    } else {
+      this.logger.log(chalk.yellow(`Unexpected error (${err.code}). Retrying in 5 seconds...`))
+      console.error(err)
     }
+  
+    setTimeout(() => this.startSocket(), 5000)
   }
 
   private startSocket() {
